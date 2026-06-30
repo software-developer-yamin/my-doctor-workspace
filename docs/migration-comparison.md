@@ -125,7 +125,7 @@ No Docker configuration. No CI/CD pipeline. Manual `pm2 start` on the backend. A
 | Layer | Technology | Change |
 |-------|-----------|--------|
 | Runtime | Node.js 20+ | Explicit requirement |
-| Backend | Express 5, TypeScript ESM (`NodeNext`) | Express 4 → 5 |
+| Backend | Express 4, TypeScript ESM (`NodeNext`) | CommonJS → ESM |
 | Frontend | Next.js 16.2 (Turbopack), React 19 | Next.js 15, React 18 |
 | Admin | Vite 8, React 19, TanStack Router | Vite (same), extracted to own app |
 | Database | MongoDB + Mongoose | Same |
@@ -157,7 +157,7 @@ my-doctor-workspace/                    ← Turborepo workspace root
         lib/
           api.ts                        ← Axios instance with auth interceptors
         redux/                          ← Auth state only
-    server/                             ← Express 5 REST API
+    server/                             ← Express 4 REST API
       src/
         app.ts                          ← env.js imported FIRST
         config/
@@ -375,7 +375,7 @@ Added: `ioredis`, `tsx`, `http-status-codes`, `hpp`, `@types/hpp`, `zod`
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
 │  │  apps/web    │  │ apps/server  │  │   apps/admin     │  │
-│  │ (Next.js 16) │  │ (Express 5)  │  │   (Vite 8)       │  │
+│  │ (Next.js 16) │  │ (Express 4)  │  │   (Vite 8)       │  │
 │  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘  │
 │         │                 │                    │             │
 │         └────────────────▼────────────────────┘             │
@@ -423,7 +423,7 @@ Old:
                       Admin (static)
 
 New:
-  Web (Next.js)  ──HTTP──► Server (Express 5)  ──► MongoDB Atlas
+  Web (Next.js)  ──HTTP──► Server (Express 4)  ──► MongoDB Atlas
   Admin (Vite)   ──HTTP──►       │               ──► Redis (ioredis)
                                  │
                             src/base/  ──► Google Gemini API
