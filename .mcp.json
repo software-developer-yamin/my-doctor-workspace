@@ -12,9 +12,28 @@
         "/home/yamin/Documents/smartechedge/my-doctor-workspace"
       ]
     },
-    "better-t-stack": {
+    "mongodb": {
       "command": "npx",
-      "args": ["-y", "create-better-t-stack@latest", "mcp"]
+      "args": ["-y", "@mongodb-js/mongodb-mcp-server@latest"],
+      "env": {
+        "MDB_MCP_CONNECTION_STRING": "${MONGODB_URI}",
+        "MDB_MCP_DB_NAME": "${DB_NAME}"
+      }
+    },
+    "redis": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-redis@latest", "redis://127.0.0.1:6379"]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search@latest"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_SEARCH_API_KEY}"
+      }
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer@latest"]
     }
   }
 }
