@@ -11,6 +11,10 @@
         "@modelcontextprotocol/server-filesystem@latest",
         "/home/yamin/Documents/smartechedge/my-doctor-workspace"
       ]
+    },
+    "better-t-stack": {
+      "command": "npx",
+      "args": ["-y", "create-better-t-stack@latest", "mcp"]
     }
   }
 }
