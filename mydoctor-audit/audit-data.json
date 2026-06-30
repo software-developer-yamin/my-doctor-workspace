@@ -1,0 +1,324 @@
+{
+  "summary": {
+    "health_score": 52,
+    "business_type": "Healthcare SaaS / YMYL — Medical services platform (Bangladesh)",
+    "audit_date": "2026-06-27",
+    "url": "https://mydoctor.com.bd",
+    "stack": "Next.js 15 App Router, React 19, TypeScript",
+    "top_findings": [
+      "OG image /og-image.jpg returns 404 — all social sharing broken",
+      "Homepage title renders with 'My Doctor' twice due to template + title overlap",
+      "JSON-LD schemas (Organization, WebSite) not in initial server HTML — schema count: 0",
+      "All homepage sections are 'use client' — headings and content not in initial HTML",
+      "H1 on homepage is sr-only (visually hidden)"
+    ],
+    "quick_wins": [
+      "Create /public/og-image.jpg (1200x630px) — fixes all social previews immediately",
+      "Change homepage title from 'My Doctor — Trusted...' to 'Trusted...' (10 min fix)",
+      "Move Organization + WebSite schema to layout.tsx server component",
+      "Add nurses/blogs/telemedicine slugs to sitemap.ts",
+      "Remove /search from sitemap"
+    ]
+  },
+  "categories": [
+    {
+      "name": "Technical SEO",
+      "score": 68,
+      "what_works": [
+        "All public pages return HTTP 200",
+        "robots.txt present, linked from sitemap",
+        "WWW to non-WWW redirect configured",
+        "5 security headers implemented (HSTS, X-Frame-Options, etc.)",
+        "Canonical tags on all major pages",
+        "Dynamic sitemap with doctor + hospital slugs"
+      ],
+      "findings": [
+        {
+          "title": "robots.txt redundant Allow directive",
+          "severity": "Medium",
+          "description": "Allow: /_next/static/ is redundant since Allow: / covers everything. /uploads/ blocked — verify intent.",
+          "recommendation": "Simplify robots.txt: keep Allow: / and Disallow: /api/. Remove redundant /_next/static/ line."
+        },
+        {
+          "title": "/search page in sitemap",
+          "severity": "Medium",
+          "description": "Search result pages have no unique crawlable content and waste crawl budget.",
+          "recommendation": "Remove /search from staticRoutes in src/app/sitemap.ts"
+        },
+        {
+          "title": "No Content-Security-Policy header",
+          "severity": "Low",
+          "description": "CSP header missing. Other security headers are present.",
+          "recommendation": "Add CSP header in next.config.ts headers() array."
+        }
+      ]
+    },
+    {
+      "name": "Content Quality",
+      "score": 45,
+      "what_works": [
+        "Title tags are descriptive and keyword-rich",
+        "Meta descriptions are well-crafted (130-160 chars)",
+        "Doctor profiles have credentials and ratings",
+        "FAQ section on homepage",
+        "Contact info with phone, address, email"
+      ],
+      "findings": [
+        {
+          "title": "Homepage title duplicates brand name",
+          "severity": "Critical",
+          "description": "Root layout template '%s | My Doctor' + homepage title 'My Doctor — Trusted Healthcare Platform in Bangladesh' renders as 'My Doctor — Trusted Healthcare Platform in Bangladesh | My Doctor'. Confirmed in live HTML.",
+          "recommendation": "Change page title in src/app/(primary)/(home)/page.tsx to 'Trusted Healthcare Platform in Bangladesh' (without 'My Doctor —' prefix)."
+        },
+        {
+          "title": "H1 visually hidden with sr-only",
+          "severity": "High",
+          "description": "Homepage H1 'My Doctor — Book Doctors, Telemedicine & Healthcare Services in Bangladesh' uses className='sr-only'. Google can read it but visual H1s send stronger relevance signals.",
+          "recommendation": "Remove sr-only and integrate H1 visually into hero section, or move it to a visible position."
+        },
+        {
+          "title": "All homepage sections are client components",
+          "severity": "High",
+          "description": "hero-section, specializations-section, active-doctors-section, ambulance-section, diagnostics-section, faqs-section, news-section, testimonials-section all have 'use client'. H2/H3 headings and body text not in initial HTML (confirmed: 0 headings in curl output).",
+          "recommendation": "Convert purely display sections (StatsSection, TrustSection, HowItWorksSection, AppDownloadSection) to server components. For data-fetching sections, use RSC for data + thin client wrapper for interactivity."
+        },
+        {
+          "title": "Static/hardcoded blog and nurse content",
+          "severity": "High",
+          "description": "~5 blog posts in news.data.ts, ~8 nurses in nurse-details.data.ts, ~46 telemedicine specializations — all hardcoded. Not scalable for content authority.",
+          "recommendation": "Consider CMS integration for blogs and nurse profiles, or at minimum expand static content."
+        },
+        {
+          "title": "No hreflang for Bengali",
+          "severity": "Medium",
+          "description": "Site targets Bangladesh audience but only has lang='en'. No Bengali (bn-BD) alternate.",
+          "recommendation": "Add hreflang alternate if Bengali content exists or is planned."
+        },
+        {
+          "title": "Blog posts lack author attribution",
+          "severity": "Medium",
+          "description": "Blog articles have no author name or credentials. YMYL health content requires strong E-E-A-T.",
+          "recommendation": "Add author name and credentials to news.data.ts and render them on blog pages."
+        },
+        {
+          "title": "Twitter and LinkedIn links are invalid (#)",
+          "severity": "Medium",
+          "description": "SITE.links.twitter = '#' and SITE.links.linkedin = '#' — these appear in schema sameAs arrays as invalid URLs.",
+          "recommendation": "Update src/config/site.ts with real profile URLs or remove from schema sameAs."
+        }
+      ]
+    },
+    {
+      "name": "On-Page SEO",
+      "score": 60,
+      "what_works": [
+        "Title tags keyword-rich with location signals (Bangladesh, Dhaka)",
+        "Meta descriptions action-oriented",
+        "Keywords arrays defined per page",
+        "OpenGraph + Twitter Card tags on all pages",
+        "Canonical URLs on all public pages"
+      ],
+      "findings": [
+        {
+          "title": "OG image returns 404 — all social sharing broken",
+          "severity": "Critical",
+          "description": "https://mydoctor.com.bd/og-image.jpg returns HTTP 404. File /public/og-image.jpg does not exist. Referenced by ALL pages via SITE.ogImage.",
+          "recommendation": "Create /public/og-image.jpg at 1200x630px. Update Organization schema logo to use /logo.svg."
+        },
+        {
+          "title": "og:title in root layout doesn't use template",
+          "severity": "Medium",
+          "description": "Root layout openGraph.title = SITE.name = 'My Doctor' — this static value is used as fallback for pages without OG override, but the title template doesn't apply to OG.",
+          "recommendation": "Accept this as expected behavior — page-level metadata overrides OG title correctly."
+        },
+        {
+          "title": "No og:locale tag",
+          "severity": "Low",
+          "description": "No og:locale declared. Should be en_BD for English content targeting Bangladesh.",
+          "recommendation": "Add openGraph.locale: 'en_BD' to root layout metadata."
+        }
+      ]
+    },
+    {
+      "name": "Schema / Structured Data",
+      "score": 35,
+      "what_works": [
+        "Organization schema on homepage (name, contactPoint, address, sameAs)",
+        "WebSite schema with SearchAction (Sitelinks Searchbox eligible)",
+        "Physician schema on doctor detail pages with credentials + rating",
+        "Article schema on blog pages"
+      ],
+      "findings": [
+        {
+          "title": "JSON-LD schemas not in initial server HTML",
+          "severity": "Critical",
+          "description": "curl on homepage returns SCHEMA COUNT: 0. Schemas defined in page.tsx are not rendered in initial HTML due to RSC streaming behavior. Google sees schemas on JS re-render but initial crawl finds nothing.",
+          "recommendation": "Move Organization and WebSite schemas to src/app/layout.tsx (guaranteed server component) using dangerouslySetInnerHTML."
+        },
+        {
+          "title": "Organization.logo is missing OG image (404)",
+          "severity": "High",
+          "description": "logo: 'https://mydoctor.com.bd/og-image.jpg' — file doesn't exist AND is an OG image, not a logo.",
+          "recommendation": "Change to 'https://mydoctor.com.bd/logo.svg' which exists in /public."
+        },
+        {
+          "title": "No schema on listing pages",
+          "severity": "High",
+          "description": "/doctors, /hospitals, /specializations, /ambulances, /diagnostics have no structured data.",
+          "recommendation": "Add ItemList + BreadcrumbList to listing pages. Add EmergencyService to /ambulances, MedicalLaboratory to /diagnostics."
+        },
+        {
+          "title": "sameAs has invalid URLs",
+          "severity": "High",
+          "description": "Twitter and LinkedIn sameAs entries are '#' — invalid.",
+          "recommendation": "Remove '#' entries from sameAs array in organization schema."
+        },
+        {
+          "title": "No BreadcrumbList schema",
+          "severity": "Medium",
+          "description": "No breadcrumb structured data on any page. Breadcrumbs in SERPs improve CTR.",
+          "recommendation": "Add BreadcrumbList to all layout.tsx files for major routes."
+        }
+      ]
+    },
+    {
+      "name": "Performance (CWV)",
+      "score": 55,
+      "what_works": [
+        "Hero image has priority={true} on first slide",
+        "Manual <link rel=preload> for hero SVG in page.tsx",
+        "Fixed aspect-ratio containers prevent layout shift",
+        "next/font with display: swap for all fonts"
+      ],
+      "findings": [
+        {
+          "title": "Hero LCP element in client component with JS carousel",
+          "severity": "High",
+          "description": "HeroSection is 'use client' with embla-carousel Autoplay. LCP image delayed until JS hydration.",
+          "recommendation": "Convert carousel to server component shell. Initialize Autoplay only after hydration with useEffect."
+        },
+        {
+          "title": "SVG hero images not optimized",
+          "severity": "High",
+          "description": "Next.js Image optimization does not apply to SVG files. /images/hero/01.svg bypasses Next.js pipeline.",
+          "recommendation": "Convert hero images to WebP/AVIF for 40-60% size reduction."
+        },
+        {
+          "title": "30+ JS script chunks on initial load",
+          "severity": "Medium",
+          "description": "30 script tags detected on homepage. Heavy client bundle due to all sections being client components.",
+          "recommendation": "Convert static sections to server components to reduce client JS bundle."
+        }
+      ]
+    },
+    {
+      "name": "AI Search Readiness",
+      "score": 30,
+      "what_works": [
+        "AI crawlers allowed via Allow: /",
+        "FAQ section — strong AI citation target",
+        "Structured doctor data is citation-friendly",
+        "SearchAction schema enables sitelinks search"
+      ],
+      "findings": [
+        {
+          "title": "llms.txt missing",
+          "severity": "High",
+          "description": "https://mydoctor.com.bd/llms.txt returns 404. llms.txt is the emerging standard for AI-readable site docs. ChatGPT, Perplexity, Claude Web check for it.",
+          "recommendation": "Create /public/llms.txt with service descriptions, navigation links, and contact info."
+        },
+        {
+          "title": "Homepage content not in initial HTML",
+          "severity": "High",
+          "description": "AI crawlers that don't execute JS see almost no content. FAQ, specializations, services all client-rendered.",
+          "recommendation": "Convert static sections to server components (see Content Quality fixes)."
+        },
+        {
+          "title": "No explicit AI crawler directives",
+          "severity": "Medium",
+          "description": "No specific rules for GPTBot, ClaudeBot, PerplexityBot in robots.txt. Currently all get default Allow: /.",
+          "recommendation": "Decide crawling policy for AI training bots and add explicit rules."
+        }
+      ]
+    },
+    {
+      "name": "Images",
+      "score": 20,
+      "what_works": [
+        "Next.js Image component used with fill, sizes, priority",
+        "Remote patterns configured for CDN domains"
+      ],
+      "findings": [
+        {
+          "title": "og-image.jpg does not exist",
+          "severity": "Critical",
+          "description": "/public/og-image.jpg missing. Referenced by all pages for OG/Twitter social previews.",
+          "recommendation": "Create 1200x630px OG image and place at /public/og-image.jpg."
+        },
+        {
+          "title": "Hero images are SVG format",
+          "severity": "High",
+          "description": "SVG bypasses Next.js Image optimization pipeline. No compression, no WebP conversion.",
+          "recommendation": "Convert /images/hero/01.svg and /images/hero/03.svg to WebP."
+        }
+      ]
+    }
+  ],
+  "action_plan": {
+    "phases": [
+      {
+        "name": "Phase 1: Critical Fixes",
+        "timeframe": "Week 1",
+        "items": [
+          "Create /public/og-image.jpg (1200x630px)",
+          "Fix homepage title — remove 'My Doctor —' prefix from page title",
+          "Move Organization + WebSite schemas to layout.tsx",
+          "Remove sr-only from homepage H1",
+          "Set up Google Search Console"
+        ]
+      },
+      {
+        "name": "Phase 2: High-Impact Improvements",
+        "timeframe": "Weeks 2-3",
+        "items": [
+          "Add nurses/blogs/telemedicine routes to sitemap.ts",
+          "Remove /search from sitemap",
+          "Fix Organization schema logo URL",
+          "Remove invalid sameAs entries (#)",
+          "Add BreadcrumbList + ItemList schema to listing pages",
+          "Add EmergencyService schema to /ambulances",
+          "Convert StatsSection, TrustSection, HowItWorksSection to server components",
+          "Update Twitter/LinkedIn URLs in site.ts"
+        ]
+      },
+      {
+        "name": "Phase 3: Content & Authority",
+        "timeframe": "Month 2",
+        "items": [
+          "Create /public/llms.txt",
+          "Add author attribution to blog posts",
+          "Add BreadcrumbList to all layout files",
+          "Convert hero images to WebP/AVIF",
+          "Add og:locale to root metadata",
+          "Reduce Hind Siliguri font weights to 2",
+          "Plan Bengali content / hreflang strategy"
+        ]
+      },
+      {
+        "name": "Phase 4: Monitoring & Iteration",
+        "timeframe": "Ongoing",
+        "items": [
+          "Monitor GSC Index Coverage weekly",
+          "Track CWV field data via CrUX",
+          "Monitor social sharing previews after OG image fix",
+          "Expand blog content (target 2+ posts/month)",
+          "Consider CMS for nurses and blog content"
+        ]
+      }
+    ]
+  },
+  "artifacts": {
+    "findings_dir": "findings/",
+    "screenshots_dir": "screenshots/"
+  }
+}

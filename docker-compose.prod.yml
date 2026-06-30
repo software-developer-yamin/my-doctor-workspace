@@ -1,0 +1,89 @@
+name: my-doctor-prod
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: my-doctor-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?MONGO_ROOT_USER required}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD required}
+      MONGO_INITDB_DATABASE: ${DB_NAME:?DB_NAME required}
+    volumes:
+      - mongo_prod_data:/data/db
+    networks:
+      - my-doctor-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: my-doctor-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD required}
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - my-doctor-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    container_name: my-doctor-server
+    restart: always
+    env_file: apps/server/.env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${SERVER_PORT:-6089}:6089"
+    networks:
+      - my-doctor-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6089/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: my-doctor-web
+    restart: always
+    env_file: apps/web/.env
+    environment:
+      NODE_ENV: production
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    networks:
+      - my-doctor-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  my-doctor-network:
+    driver: bridge
+
+volumes:
+  mongo_prod_data:
+  redis_prod_data:

@@ -1,0 +1,38 @@
+{
+  "name": "my-doctor-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "biome check . && turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.1",
+    "lefthook": "^1.7.0",
+    "turbo": "^2.3.3",
+    "ultracite": "^7.8.3"
+  },
+  "packageManager": "pnpm@10.9.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "@clerk/shared",
+      "@swc/core",
+      "bcrypt",
+      "event-loop-stats",
+      "lefthook",
+      "puppeteer",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

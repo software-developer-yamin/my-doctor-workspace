@@ -1,0 +1,47 @@
+import { TAppointment } from "@/types/appointment.type";
+
+export const APPOINTMENTS_DATA: TAppointment[] = [
+  {
+    id: "APT-1001",
+    doctorName: "Dr. Mashrafe Mortaza",
+    doctorSpecialty: "Cardiologist",
+    date: "12 April, 2026",
+    time: "10:30 AM",
+    type: "online",
+    status: "upcoming",
+    fee: "৳ 1,000",
+    meetingLink: "https://zoom.us/j/123456789",
+  },
+  {
+    id: "APT-1002",
+    doctorName: "Dr. Shakib Al Hasan",
+    doctorSpecialty: "Neurologist",
+    date: "15 April, 2026",
+    time: "04:15 PM",
+    type: "offline",
+    status: "upcoming",
+    fee: "৳ 1,500",
+    hospitalName: "Apollo Hospital, Dhaka",
+  },
+  {
+    id: "APT-0998",
+    doctorName: "Dr. Tamim Iqbal",
+    doctorSpecialty: "Orthopedic",
+    date: "28 March, 2026",
+    time: "11:00 AM",
+    type: "online",
+    status: "completed",
+    fee: "৳ 800",
+  },
+  {
+    id: "APT-0995",
+    doctorName: "Dr. Mushfiqur Rahim",
+    doctorSpecialty: "Pediatrician",
+    date: "20 March, 2026",
+    time: "06:30 PM",
+    type: "offline",
+    status: "cancelled",
+    fee: "৳ 1,200",
+    hospitalName: "Square Hospital, Dhaka",
+  },
+];

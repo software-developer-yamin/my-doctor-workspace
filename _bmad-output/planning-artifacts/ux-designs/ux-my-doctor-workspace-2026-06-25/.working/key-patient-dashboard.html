@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Doctor — Patient Dashboard (Key Screen)</title>
+<style>
+/*
+  Spine sections governing this screen:
+  - DESIGN.md § Components § Appointment Card, Badge, Avatar, Sidebar
+  - EXPERIENCE.md § Information Architecture § Patient Dashboard
+  - EXPERIENCE.md § Component Patterns § Patient Dashboard Layout, Appointment Card, Live Queue Tracker
+  - EXPERIENCE.md § State Patterns § Loading, Empty States
+  - EXPERIENCE.md § Interaction Primitives § Navigation (sidebar), Paginated Lists
+  - EXPERIENCE.md § Key Flows § Flow 2 (steps 1–4), Flow 4 (steps 1–5)
+*/
+
+:root {
+  --primary: oklch(0.546 0.121 158);
+  --primary-dark: oklch(0.35 0.09 158);
+  --primary-light: oklch(0.95 0.02 158);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.518 0.108 191);
+  --tertiary: oklch(0.865 0.201 158);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.008 158);
+  --muted: oklch(0.965 0.005 158);
+  --muted-foreground: oklch(0.5 0.012 158);
+  --border: oklch(0.91 0.007 158);
+  --surface: oklch(0.988 0 0);
+  --card: oklch(1 0 0);
+  --success: oklch(0.593 0.148 143.9);
+  --warning: oklch(0.817 0.174 79.5);
+  --sidebar: oklch(0.985 0.003 158);
+  --sidebar-primary: oklch(0.546 0.121 158);
+  --sidebar-accent: oklch(0.95 0.007 158);
+  --sidebar-border: oklch(0.91 0.007 158);
+  --radius: 0.625rem;
+  font-family: 'Inter', 'Geist Sans', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; gap: 32px; }
+
+.frame { width: 100%; max-width: 1280px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px oklch(0 0 0 / 15%); display: flex; background: var(--background); height: 680px; }
+
+/* Sidebar */
+.sidebar { width: 240px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--sidebar-border); display: flex; flex-direction: column; height: 100%; }
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--sidebar-border); }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--primary); }
+.logo-mark { width: 26px; height: 26px; background: var(--primary); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800; }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin: 8px; border-radius: calc(var(--radius) * 1.2); background: var(--sidebar-accent); }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; background: oklch(0.546 0.121 158 / 15%); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--foreground); }
+.user-role { font-size: 11px; color: var(--muted-foreground); }
+.sidebar-nav { flex: 1; padding: 8px; overflow-y: auto; }
+.nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted-foreground); padding: 8px 8px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; transition: all 0.12s; font-size: 13px; font-weight: 500; color: var(--muted-foreground); text-decoration: none; margin-bottom: 1px; }
+.nav-item:hover { background: var(--sidebar-accent); color: var(--foreground); }
+.nav-item.active { background: var(--primary); color: white; }
+.nav-item.active .nav-icon { color: white; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+.nav-badge { margin-left: auto; background: var(--primary); color: white; border-radius: 9999px; font-size: 10px; font-weight: 700; padding: 1px 6px; }
+.nav-item.active .nav-badge { background: white; color: var(--primary); }
+.sidebar-footer { padding: 12px; border-top: 1px solid var(--sidebar-border); }
+.sidebar-footer .nav-item { color: var(--muted-foreground); }
+
+/* Main content */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border); background: white; }
+.page-title { font-size: 16px; font-weight: 700; color: var(--foreground); }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.icon-btn { width: 34px; height: 34px; border-radius: var(--radius); border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius); font-weight: 500; cursor: pointer; font-family: inherit; font-size: 13px; border: none; }
+.btn-primary { height: 34px; padding: 0 14px; background: var(--primary); color: white; }
+
+/* Live banner */
+.live-banner { display: flex; align-items: center; gap: 10px; padding: 10px 20px; background: oklch(0.546 0.121 158 / 6%); border-bottom: 1px solid oklch(0.546 0.121 158 / 20%); }
+.live-pill { display: flex; align-items: center; gap: 5px; background: var(--primary); color: white; border-radius: 9999px; padding: 4px 10px; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tertiary); animation: pulse-dot 1.5s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.8)} }
+.live-text { font-size: 13px; color: var(--foreground); }
+.live-text strong { color: var(--primary); }
+.tracker-link { margin-left: auto; font-size: 12px; color: var(--primary); font-weight: 500; text-decoration: none; border: 1px solid oklch(0.546 0.121 158 / 30%); padding: 3px 9px; border-radius: 9999px; background: white; }
+
+/* Content area */
+.content { flex: 1; overflow-y: auto; padding: 16px 20px; background: var(--surface); }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--muted-foreground); border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; }
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+/* Appointment list */
+.appt-list { display: flex; flex-direction: column; gap: 10px; }
+.appt-card { background: white; border: 1.5px solid var(--border); border-radius: calc(var(--radius) * 1.2); padding: 14px; display: flex; align-items: center; gap: 14px; }
+.appt-card:hover { border-color: oklch(0.546 0.121 158 / 40%); }
+.serial-badge-appt { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 900; color: var(--primary); background: var(--primary-light); width: 44px; height: 44px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid oklch(0.546 0.121 158 / 25%); }
+.appt-meta { flex: 1; min-width: 0; }
+.appt-name { font-size: 14px; font-weight: 600; color: var(--foreground); margin-bottom: 3px; }
+.appt-detail { font-size: 12px; color: var(--muted-foreground); display: flex; gap: 12px; }
+.appt-detail span { display: flex; align-items: center; gap: 3px; }
+.status-badge { padding: 3px 9px; border-radius: 9999px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.badge-confirmed { background: oklch(0.593 0.148 143.9 / 12%); color: oklch(0.4 0.1 143.9); }
+.badge-pending { background: oklch(0.817 0.174 79.5 / 15%); color: oklch(0.5 0.1 79.5); }
+.badge-completed { background: var(--muted); color: var(--muted-foreground); }
+.badge-cancelled { background: oklch(0.548 0.222 26.2 / 10%); color: oklch(0.45 0.18 26.2); }
+.appt-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.action-btn { height: 30px; padding: 0 10px; font-size: 12px; border-radius: 7px; cursor: pointer; font-family: inherit; font-weight: 500; }
+.action-primary { background: var(--primary); color: white; border: none; }
+.action-outline { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border); }
+.action-ghost { background: transparent; color: var(--primary); border: none; font-size: 12px; cursor: pointer; font-family: inherit; }
+
+/* Pagination */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 20px; }
+.page-btn { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; font-family: inherit; color: var(--foreground); }
+.page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.page-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+
+.caption { font-size: 11px; color: #888; text-align: center; padding: 8px; }
+</style>
+</head>
+<body>
+
+<div style="font-size:12px;color:#666;text-align:center;max-width:900px">
+  <strong>Key Screen 4 of 4 — Patient Dashboard · Appointments tab</strong><br>
+  Illustrates: Dashboard sidebar layout, Live Serial Banner, Appointment cards (all status variants), serial numbers in monospace.<br>
+  Spine: EXPERIENCE.md § Patient Dashboard Layout, Appointment Card, Live Queue Tracker, Key Flows 1 (step 10) & 4
+</div>
+
+<div class="frame">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><div class="logo-mark">M</div>My Doctor</div>
+    </div>
+    <div class="user-card">
+      <div class="user-avatar">👤</div>
+      <div><div class="user-name">Rahima Begum</div><div class="user-role">Patient</div></div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Dashboard</div>
+      <div class="nav-item active"><span class="nav-icon">📅</span>Appointments<span class="nav-badge">3</span></div>
+      <div class="nav-item"><span class="nav-icon">🔬</span>Diagnostic Bookings</div>
+      <div class="nav-item"><span class="nav-icon">🚑</span>Ambulance Bookings</div>
+      <div class="nav-item"><span class="nav-icon">📖</span>Guide Bookings</div>
+      <div class="nav-section-label">Health</div>
+      <div class="nav-item"><span class="nav-icon">📋</span>Medical Records</div>
+      <div class="nav-item"><span class="nav-icon">📔</span>Feeling Journal</div>
+      <div class="nav-section-label">Account</div>
+      <div class="nav-item"><span class="nav-icon">🛒</span>My Service Cart</div>
+      <div class="nav-item"><span class="nav-icon">🛍️</span>Shopping Cart<span class="nav-badge" style="background:var(--warning);color:white;">2</span></div>
+      <div class="nav-item"><span class="nav-icon">📬</span>My Requests</div>
+      <div class="nav-item"><span class="nav-icon">👥</span>Refer a Friend</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-item"><span class="nav-icon">⚙️</span>Profile Settings</div>
+      <div class="nav-item" style="color:oklch(0.548 0.222 26.2)"><span class="nav-icon">🚪</span>Sign Out</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title">My Appointments</div>
+      <div class="topbar-actions">
+        <div class="icon-btn" title="Notifications">🔔</div>
+        <button class="btn btn-primary">+ Book Appointment</button>
+      </div>
+    </div>
+
+    <!-- Live queue banner -->
+    <div class="live-banner">
+      <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+      <div class="live-text">Dr. Karim is now serving serial <strong>#9</strong>. Your serial is <strong>#12</strong>. ~3 patients ahead.</div>
+      <a href="#" class="tracker-link">Track live →</a>
+    </div>
+
+    <div class="content">
+      <div class="tabs">
+        <div class="tab active">Upcoming (3)</div>
+        <div class="tab">Past (18)</div>
+        <div class="tab">Cancelled (2)</div>
+      </div>
+
+      <div class="appt-list">
+
+        <!-- Confirmed — today / live -->
+        <div class="appt-card" style="border-color:oklch(0.546 0.121 158 / 40%);background:oklch(0.546 0.121 158 / 3%)">
+          <div class="serial-badge-appt">#12</div>
+          <div class="appt-meta">
+            <div class="appt-name">Dr. Md. Karim Hossain — Pediatrician</div>
+            <div class="appt-detail">
+              <span>📅 Thu, Jun 26 · 10:30 AM</span>
+              <span>📍 Narsingdi Sadar Hospital</span>
+              <span>💳 ৳600 Paid</span>
+            </div>
+          </div>
+          <span class="status-badge badge-confirmed">● Confirmed</span>
+          <div class="appt-actions">
+            <button class="action-btn action-primary">Track Queue</button>
+            <button class="action-btn action-outline">Reschedule</button>
+          </div>
+        </div>
+
+        <!-- Pending payment -->
+        <div class="appt-card">
+          <div class="serial-badge-appt" style="color:oklch(0.5 0.1 79.5);background:oklch(0.817 0.174 79.5 / 12%);border-color:oklch(0.817 0.174 79.5 / 30%)">#—</div>
+          <div class="appt-meta">
+            <div class="appt-name">Dr. Sultana Begum — Pediatrician</div>
+            <div class="appt-detail">
+              <span>📅 Fri, Jun 27 · 4:00 PM</span>
+              <span>📍 Narsingdi District Hospital</span>
+              <span>💳 ৳800 Pending</span>
+            </div>
+          </div>
+          <span class="status-badge badge-pending">⏳ Payment Pending</span>
+          <div class="appt-actions">
+            <button class="action-btn action-primary" style="background:oklch(0.817 0.174 79.5);">Pay Now</button>
+            <button class="action-btn action-outline">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Future confirmed -->
+        <div class="appt-card">
+          <div class="serial-badge-appt">#7</div>
+          <div class="appt-meta">
+            <div class="appt-name">Dr. Rahman Ali — General Physician</div>
+            <div class="appt-detail">
+              <span>📅 Mon, Jun 30 · 9:00 AM</span>
+              <span>📍 Meghna Clinic, Narsingdi</span>
+              <span>💳 ৳400 Paid</span>
+            </div>
+          </div>
+          <span class="status-badge badge-confirmed">● Confirmed</span>
+          <div class="appt-actions">
+            <button class="action-btn action-ghost">View Details</button>
+            <button class="action-btn action-outline">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+        <div style="font-size:13px;font-weight:600;color:var(--foreground);margin-bottom:12px;">Recent Past Appointments</div>
+        <div class="appt-list">
+          <div class="appt-card" style="opacity:0.75">
+            <div class="serial-badge-appt" style="color:var(--muted-foreground);background:var(--muted);border-color:transparent">#5</div>
+            <div class="appt-meta">
+              <div class="appt-name">Dr. Karim Hossain — Pediatrician</div>
+              <div class="appt-detail"><span>📅 Mon, Jun 23 · 11:00 AM</span><span>📍 Narsingdi Sadar Hospital</span></div>
+            </div>
+            <span class="status-badge badge-completed">✓ Completed</span>
+            <div class="appt-actions">
+              <button class="action-btn action-ghost">Prescription</button>
+              <button class="action-btn action-ghost">Rebook</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pagination">
+        <button class="page-btn disabled">‹</button>
+        <button class="page-btn active">1</button>
+        <button class="page-btn">2</button>
+        <button class="page-btn">3</button>
+        <button class="page-btn">›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">My Doctor — Key Screen 4/4: Patient Dashboard · Sidebar + appointment list · Live queue banner · All status variants · Monospace serial numbers</p>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# My Doctor — Healthcare Platform Bangladesh
+
+> My Doctor connects patients with doctors, hospitals, diagnostics, ambulances, and nursing services across Bangladesh. Available 24/7.
+
+## Services
+
+- [Book Doctor Appointments](https://mydoctor.com.bd/doctors) — Find and book specialist doctors by specialty, location, or availability
+- [Telemedicine](https://mydoctor.com.bd/telemedicine) — Online video and chat consultations with licensed doctors
+- [Hospitals](https://mydoctor.com.bd/hospitals) — Find hospitals, clinics, and live queue status
+- [Diagnostics](https://mydoctor.com.bd/diagnostics) — Book lab tests, blood work, and imaging scans
+- [Ambulance](https://mydoctor.com.bd/ambulances) — Emergency ambulance booking 24/7
+- [Home Nursing](https://mydoctor.com.bd/nurses) — Hire qualified nurses for home care and post-surgical recovery
+- [Specializations](https://mydoctor.com.bd/specializations) — Browse medical specialties and find the right doctor
+- [Domiciliary Services](https://mydoctor.com.bd/domiciliary-services) — Doctor home visits and in-home medical care
+- [Health Checkup Packages](https://mydoctor.com.bd/health-checkup-services) — Comprehensive health screening packages
+
+## About
+
+My Doctor is a Bangladeshi healthcare platform founded to make quality healthcare accessible to all. Headquartered in Narsingdi, we serve patients nationwide with digital tools for appointment booking, live queue tracking, telemedicine, and emergency services.
+
+## Contact
+
+- Phone: +8801974-200905
+- Email: mydoctorinfo247@gmail.com
+- Address: Ground floor, Khandakar General Hospital, Molla Tower, Bazirb Moor (Golap Chattar), Narsingdi, Bangladesh
+- Facebook: https://www.facebook.com/share/18TnLxUvHy/
+- Instagram: https://www.instagram.com/mydoctorinfo247
+- YouTube: https://youtube.com/@mydoctorbd247
+
+## Key Pages
+
+- [Home](https://mydoctor.com.bd)
+- [About Us](https://mydoctor.com.bd/about)
+- [Contact](https://mydoctor.com.bd/contact)
+- [FAQ](https://mydoctor.com.bd/faq)
+- [Blog](https://mydoctor.com.bd/blogs)
+- [Partners](https://mydoctor.com.bd/partners)
+- [Privacy Policy](https://mydoctor.com.bd/privacy-policy)
+- [Terms and Conditions](https://mydoctor.com.bd/terms-and-conditions)

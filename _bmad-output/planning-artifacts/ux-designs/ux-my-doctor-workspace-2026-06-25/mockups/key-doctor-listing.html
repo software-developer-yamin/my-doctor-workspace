@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Doctor — Doctor Listing (Key Screen)</title>
+<style>
+/*
+  Spine sections governing this screen:
+  - DESIGN.md § Components § Doctor Card, Badge
+  - EXPERIENCE.md § Component Patterns § Doctor Listing, Search Bar, Filters
+  - EXPERIENCE.md § State Patterns § Loading (skeletons shown in alternate state column)
+  - EXPERIENCE.md § Key Flows § Flow 1 (steps 3–5)
+*/
+
+:root {
+  --primary: oklch(0.546 0.121 158);
+  --primary-dark: oklch(0.35 0.09 158);
+  --primary-light: oklch(0.95 0.02 158);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.518 0.108 191);
+  --tertiary: oklch(0.865 0.201 158);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.008 158);
+  --muted: oklch(0.965 0.005 158);
+  --muted-foreground: oklch(0.5 0.012 158);
+  --border: oklch(0.91 0.007 158);
+  --surface: oklch(0.988 0 0);
+  --card: oklch(1 0 0);
+  --success: oklch(0.593 0.148 143.9);
+  --radius: 0.625rem;
+  font-family: 'Inter', 'Geist Sans', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f4f4f5; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; gap: 40px; }
+
+.frame { width: 100%; max-width: 1280px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px oklch(0 0 0 / 15%); background: var(--background); }
+.browser-bar { background: #e8e8e8; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+.url-bar { flex: 1; background: white; border-radius: 6px; padding: 4px 12px; font-size: 12px; color: #666; }
+
+/* Header stripped down */
+header { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; color: var(--primary); }
+.logo-mark { width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 800; }
+nav { display: flex; gap: 20px; }
+nav a { font-size: 13px; color: var(--muted-foreground); text-decoration: none; font-weight: 500; }
+nav a.active { color: var(--primary); font-weight: 600; }
+
+/* Breadcrumb */
+.breadcrumb { padding: 12px 24px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted-foreground); display: flex; gap: 6px; align-items: center; background: var(--surface); }
+.breadcrumb a { color: var(--primary); text-decoration: none; }
+.breadcrumb span { color: var(--muted-foreground); }
+
+/* Page layout */
+.page-layout { display: grid; grid-template-columns: 260px 1fr; min-height: 600px; }
+
+/* Filter sidebar */
+.filter-sidebar { border-right: 1px solid var(--border); padding: 20px 16px; background: var(--surface); }
+.filter-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.filter-title { font-size: 15px; font-weight: 700; color: var(--foreground); }
+.clear-btn { font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 500; background: none; border: none; }
+.filter-section { margin-bottom: 20px; }
+.filter-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); margin-bottom: 10px; }
+.filter-option { display: flex; align-items: center; gap: 8px; padding: 6px 0; cursor: pointer; }
+.checkbox { width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.checkbox.checked { background: var(--primary); border-color: var(--primary); color: white; font-size: 10px; }
+.filter-label { font-size: 13px; color: var(--foreground); }
+.filter-count { margin-left: auto; font-size: 11px; color: var(--muted-foreground); background: var(--muted); border-radius: 9999px; padding: 1px 7px; }
+.fee-slider { width: 100%; margin-top: 8px; }
+.fee-range { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted-foreground); margin-top: 6px; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.active-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: oklch(0.546 0.121 158 / 12%); color: var(--primary); border-radius: 9999px; font-size: 11px; font-weight: 500; border: 1px solid oklch(0.546 0.121 158 / 25%); }
+.active-chip .remove { cursor: pointer; font-size: 12px; }
+
+/* Main content */
+.main-content { padding: 20px 24px; }
+.results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.results-count { font-size: 14px; color: var(--muted-foreground); }
+.results-count strong { color: var(--foreground); }
+.sort-row { display: flex; align-items: center; gap: 8px; }
+.sort-label { font-size: 13px; color: var(--muted-foreground); }
+.sort-select { border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--foreground); background: white; font-family: inherit; }
+
+/* Doctor cards grid */
+.doctor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* Doctor card */
+.doctor-card { border: 1.5px solid var(--border); border-radius: calc(var(--radius) * 1.4); background: white; overflow: hidden; transition: all 0.15s; }
+.doctor-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px oklch(0.546 0.121 158 / 15%); transform: translateY(-2px); }
+.card-header { padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: oklch(0.546 0.121 158 / 12%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid oklch(0.546 0.121 158 / 20%); }
+.avatar.photo { background: linear-gradient(135deg, oklch(0.4 0.06 158), oklch(0.3 0.04 170)); }
+.doctor-meta { flex: 1; min-width: 0; }
+.doctor-name { font-size: 15px; font-weight: 700; color: var(--foreground); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doctor-specialty { font-size: 12px; color: var(--muted-foreground); margin-bottom: 5px; }
+.rating-row { display: flex; align-items: center; gap: 5px; }
+.stars { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
+.rating-num { font-size: 12px; font-weight: 600; color: var(--foreground); }
+.rating-count { font-size: 11px; color: var(--muted-foreground); }
+.badge-row { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+.badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 9999px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; }
+.badge-success { background: oklch(0.593 0.148 143.9 / 12%); color: oklch(0.4 0.1 143.9); }
+.badge-primary { background: oklch(0.546 0.121 158 / 10%); color: var(--primary); }
+.badge-secondary { background: oklch(0.518 0.108 191 / 10%); color: var(--secondary); }
+.badge-muted { background: var(--muted); color: var(--muted-foreground); }
+.card-divider { height: 1px; background: var(--border); margin: 0; }
+.card-details { padding: 12px 16px; display: flex; flex-direction: column; gap: 7px; }
+.detail-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground); }
+.detail-icon { font-size: 13px; width: 16px; text-align: center; }
+.detail-text { flex: 1; }
+.fee-amount { font-weight: 700; color: var(--foreground); font-size: 14px; }
+.card-footer { padding: 12px 16px; display: flex; gap: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius); font-weight: 500; cursor: pointer; border: none; font-size: 13px; }
+.btn-primary { height: 36px; padding: 0 14px; background: var(--primary); color: white; flex: 1; font-size: 13px; }
+.btn-outline { height: 36px; padding: 0 10px; background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+
+/* Skeleton card */
+.skeleton-card { border: 1.5px solid var(--border); border-radius: calc(var(--radius) * 1.4); padding: 16px; }
+.skel { background: var(--muted); border-radius: 6px; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.skel-avatar { width: 56px; height: 56px; border-radius: 50%; }
+.skel-line { height: 12px; margin: 6px 0; }
+.skel-btn { height: 36px; border-radius: 8px; }
+
+/* Load more */
+.load-more-row { text-align: center; margin-top: 28px; }
+.load-more-btn { height: 44px; padding: 0 32px; background: white; color: var(--primary); border: 1.5px solid var(--primary); border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; }
+
+.caption { font-size: 11px; color: #888; text-align: center; padding: 8px; }
+</style>
+</head>
+<body>
+
+<div style="font-size:12px;color:#666;text-align:center;max-width:900px">
+  <strong>Key Screen 2 of 4 — Doctor Listing (loaded state · alternate: skeleton loading)</strong><br>
+  Illustrates: Doctor Card component, Filter sidebar, Active filter chips, 3-col grid, Load More.<br>
+  Spine: EXPERIENCE.md § Doctor Listing, Key Flow 1 (steps 3–5) · DESIGN.md § Components § Doctor Card, Badge
+</div>
+
+<div class="frame">
+  <div class="browser-bar">
+    <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    <div class="url-bar">mydoctor.com.bd/doctors?specialty=Pediatrician&location=Narsingdi</div>
+  </div>
+  <header>
+    <div class="logo"><div class="logo-mark">M</div>My Doctor</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#" class="active">Doctors</a>
+      <a href="#">Hospitals</a>
+      <a href="#">Diagnostics</a>
+      <a href="#">More ▾</a>
+    </nav>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">👤</div>
+    </div>
+  </header>
+  <div class="breadcrumb"><a href="#">Home</a><span>›</span><span>Doctors</span></div>
+
+  <div class="page-layout">
+    <!-- Sidebar -->
+    <div class="filter-sidebar">
+      <div class="filter-header">
+        <span class="filter-title">Filters</span>
+        <button class="clear-btn">Clear all</button>
+      </div>
+
+      <div class="active-filters">
+        <span class="active-chip">Pediatrician <span class="remove">✕</span></span>
+        <span class="active-chip">Narsingdi <span class="remove">✕</span></span>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Availability</div>
+        <div class="filter-option"><div class="checkbox checked">✓</div><span class="filter-label">Available Today</span><span class="filter-count">8</span></div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">Available This Week</span><span class="filter-count">24</span></div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">Telemedicine</span><span class="filter-count">15</span></div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Gender</div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">Male</span><span class="filter-count">18</span></div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">Female</span><span class="filter-count">9</span></div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Consultation Fee</div>
+        <div style="padding:0 4px;">
+          <input type="range" class="fee-slider" min="200" max="2000" value="1200" style="accent-color:var(--primary)">
+          <div class="fee-range"><span>৳200</span><span>Up to ৳1,200</span></div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Experience</div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">0–5 years</span></div>
+        <div class="filter-option"><div class="checkbox checked">✓</div><span class="filter-label">5–10 years</span></div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">10+ years</span></div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Rating</div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">⭐⭐⭐⭐⭐ 5.0</span></div>
+        <div class="filter-option"><div class="checkbox checked">✓</div><span class="filter-label">⭐⭐⭐⭐ 4.0+</span></div>
+        <div class="filter-option"><div class="checkbox"></div><span class="filter-label">⭐⭐⭐ 3.0+</span></div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main-content">
+      <div class="results-header">
+        <div class="results-count">Showing <strong>27 doctors</strong> in Narsingdi · Pediatrician</div>
+        <div class="sort-row">
+          <span class="sort-label">Sort by:</span>
+          <select class="sort-select"><option>Relevance</option><option>Fee: Low to High</option><option>Rating</option><option>Availability</option></select>
+        </div>
+      </div>
+
+      <!-- Cards: loaded state -->
+      <div class="doctor-grid">
+
+        <!-- Card 1 — Available -->
+        <div class="doctor-card">
+          <div class="card-header">
+            <div class="avatar photo">👨‍⚕️</div>
+            <div class="doctor-meta">
+              <div class="doctor-name">Dr. Md. Karim Hossain</div>
+              <div class="doctor-specialty">Pediatrician · MBBS, DCH</div>
+              <div class="rating-row"><span class="stars">★★★★★</span><span class="rating-num">4.9</span><span class="rating-count">(142)</span></div>
+              <div class="badge-row"><span class="badge badge-success">● Available Today</span><span class="badge badge-primary">10 yrs exp</span></div>
+            </div>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-details">
+            <div class="detail-row"><span class="detail-icon">📍</span><span class="detail-text">Narsingdi Sadar Hospital</span></div>
+            <div class="detail-row"><span class="detail-icon">💳</span><span class="detail-text">Consultation fee: <span class="fee-amount">৳600</span></span></div>
+            <div class="detail-row"><span class="detail-icon">🕐</span><span class="detail-text">Next slot: Tomorrow, 10:30 AM</span></div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary">Book Appointment</button>
+            <button class="btn btn-outline">View Profile</button>
+          </div>
+        </div>
+
+        <!-- Card 2 — Available, Female -->
+        <div class="doctor-card">
+          <div class="card-header">
+            <div class="avatar">👩‍⚕️</div>
+            <div class="doctor-meta">
+              <div class="doctor-name">Dr. Sultana Begum</div>
+              <div class="doctor-specialty">Pediatrician · MBBS, FCPS</div>
+              <div class="rating-row"><span class="stars">★★★★★</span><span class="rating-num">4.8</span><span class="rating-count">(89)</span></div>
+              <div class="badge-row"><span class="badge badge-success">● Available Today</span><span class="badge badge-secondary">Telemedicine</span></div>
+            </div>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-details">
+            <div class="detail-row"><span class="detail-icon">📍</span><span class="detail-text">Narsingdi District Hospital</span></div>
+            <div class="detail-row"><span class="detail-icon">💳</span><span class="detail-text">Consultation fee: <span class="fee-amount">৳800</span></span></div>
+            <div class="detail-row"><span class="detail-icon">🕐</span><span class="detail-text">Next slot: Today, 4:00 PM</span></div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary">Book Appointment</button>
+            <button class="btn btn-outline">View Profile</button>
+          </div>
+        </div>
+
+        <!-- Card 3 — Unavailable -->
+        <div class="doctor-card" style="opacity:0.75">
+          <div class="card-header">
+            <div class="avatar">👨‍⚕️</div>
+            <div class="doctor-meta">
+              <div class="doctor-name">Dr. Rafiqul Islam</div>
+              <div class="doctor-specialty">Pediatric Specialist · MBBS</div>
+              <div class="rating-row"><span class="stars">★★★★☆</span><span class="rating-num">4.2</span><span class="rating-count">(34)</span></div>
+              <div class="badge-row"><span class="badge badge-muted">● Unavailable Today</span><span class="badge badge-primary">8 yrs exp</span></div>
+            </div>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-details">
+            <div class="detail-row"><span class="detail-icon">📍</span><span class="detail-text">Meghna Clinic, Narsingdi</span></div>
+            <div class="detail-row"><span class="detail-icon">💳</span><span class="detail-text">Consultation fee: <span class="fee-amount">৳500</span></span></div>
+            <div class="detail-row"><span class="detail-icon">🕐</span><span class="detail-text">Next slot: Thu, 11:00 AM</span></div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary" style="background:var(--muted);color:var(--muted-foreground);">Schedule Later</button>
+            <button class="btn btn-outline">View Profile</button>
+          </div>
+        </div>
+
+        <!-- Skeleton cards (alternate state — loading) -->
+        <div class="skeleton-card">
+          <div style="display:flex;gap:12px;margin-bottom:12px;">
+            <div class="skel skel-avatar"></div>
+            <div style="flex:1;">
+              <div class="skel skel-line" style="width:70%"></div>
+              <div class="skel skel-line" style="width:50%"></div>
+              <div class="skel skel-line" style="width:40%"></div>
+            </div>
+          </div>
+          <div class="skel skel-line" style="width:80%"></div>
+          <div class="skel skel-line" style="width:60%"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <div class="skel skel-btn" style="flex:1"></div>
+            <div class="skel skel-btn" style="width:60px"></div>
+          </div>
+        </div>
+
+        <div class="skeleton-card">
+          <div style="display:flex;gap:12px;margin-bottom:12px;">
+            <div class="skel skel-avatar"></div>
+            <div style="flex:1;">
+              <div class="skel skel-line" style="width:65%"></div>
+              <div class="skel skel-line" style="width:55%"></div>
+              <div class="skel skel-line" style="width:35%"></div>
+            </div>
+          </div>
+          <div class="skel skel-line" style="width:75%"></div>
+          <div class="skel skel-line" style="width:55%"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <div class="skel skel-btn" style="flex:1"></div>
+            <div class="skel skel-btn" style="width:60px"></div>
+          </div>
+        </div>
+
+        <div class="skeleton-card">
+          <div style="display:flex;gap:12px;margin-bottom:12px;">
+            <div class="skel skel-avatar"></div>
+            <div style="flex:1;">
+              <div class="skel skel-line" style="width:75%"></div>
+              <div class="skel skel-line" style="width:45%"></div>
+              <div class="skel skel-line" style="width:45%"></div>
+            </div>
+          </div>
+          <div class="skel skel-line" style="width:70%"></div>
+          <div class="skel skel-line" style="width:65%"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <div class="skel skel-btn" style="flex:1"></div>
+            <div class="skel skel-btn" style="width:60px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--muted-foreground);text-align:center;margin-top:16px;padding:8px;background:var(--surface);border-radius:8px;">
+        ↑ Row 1: Loaded cards (available, available+telemedicine, unavailable) &nbsp;|&nbsp; Row 2: Skeleton cards (Phantom UI loading state)
+      </div>
+
+      <div class="load-more-row">
+        <button class="load-more-btn">Load 9 more doctors</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">My Doctor — Key Screen 2/4: Doctor Listing · 3-col grid + filter sidebar · Skeleton row shows Phantom UI loading state</p>
+</body>
+</html>

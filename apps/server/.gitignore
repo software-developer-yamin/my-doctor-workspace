@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.*
+
+# Build Outputs
+dist/
+build/
+
+# OS Files
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Note: package-lock.json / pnpm-lock.yaml are intentionally omitted 
+# as they should generally be committed to version control.

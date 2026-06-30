@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Doctor — Booking Flow (Key Screen)</title>
+<style>
+/*
+  Spine sections governing this screen:
+  - DESIGN.md § Components § Dialog, Button, Input, Card
+  - EXPERIENCE.md § Component Patterns § Booking Flow (steps 1–5)
+  - EXPERIENCE.md § State Patterns § Success States (confirmation shown in Step 5 column)
+  - EXPERIENCE.md § Interaction Primitives § Modals & Drawers, Forms
+  - EXPERIENCE.md § Key Flows § Flow 1 (steps 6–9)
+*/
+
+:root {
+  --primary: oklch(0.546 0.121 158);
+  --primary-dark: oklch(0.35 0.09 158);
+  --primary-light: oklch(0.95 0.02 158);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.518 0.108 191);
+  --tertiary: oklch(0.865 0.201 158);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.008 158);
+  --muted: oklch(0.965 0.005 158);
+  --muted-foreground: oklch(0.5 0.012 158);
+  --border: oklch(0.91 0.007 158);
+  --success: oklch(0.593 0.148 143.9);
+  --radius: 0.625rem;
+  font-family: 'Inter', 'Geist Sans', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; gap: 32px; }
+
+/* blurred backdrop page context */
+.page-context { width: 100%; max-width: 1280px; height: 120px; border-radius: 12px; background: linear-gradient(to right, oklch(0.95 0.01 158), white); border: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; gap: 16px; opacity: 0.4; font-size: 14px; color: var(--muted-foreground); }
+
+/* Layout: two modals side by side */
+.modals-row { display: flex; gap: 32px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+
+/* Modal / Dialog */
+.dialog { width: 520px; background: white; border-radius: calc(var(--radius) * 1.8); box-shadow: 0 24px 80px oklch(0 0 0 / 25%); overflow: hidden; }
+.dialog-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.dialog-title { font-size: 17px; font-weight: 700; color: var(--foreground); }
+.dialog-subtitle { font-size: 13px; color: var(--muted-foreground); margin-top: 3px; }
+.close-btn { position: absolute; top: 16px; right: 16px; width: 28px; height: 28px; border-radius: 50%; background: var(--muted); border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); }
+.dialog-header { position: relative; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+
+/* Stepper */
+.stepper { display: flex; align-items: center; padding: 14px 24px; background: var(--muted); gap: 0; }
+.step { display: flex; align-items: center; gap: 6px; flex: 1; }
+.step-circle { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.step-circle.done { background: var(--primary); color: white; }
+.step-circle.active { background: var(--primary); color: white; box-shadow: 0 0 0 3px oklch(0.546 0.121 158 / 25%); }
+.step-circle.todo { background: white; color: var(--muted-foreground); border: 1.5px solid var(--border); }
+.step-label { font-size: 11px; font-weight: 600; color: var(--muted-foreground); }
+.step-label.active { color: var(--primary); }
+.step-label.done { color: var(--foreground); }
+.step-line { flex: 1; height: 2px; background: var(--border); margin: 0 6px; max-width: 32px; }
+.step-line.done { background: var(--primary); }
+
+/* Dialog body */
+.dialog-body { padding: 20px 24px; }
+
+/* Chamber selection */
+.chamber-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.chamber-card { border: 1.5px solid var(--border); border-radius: calc(var(--radius) * 1.2); padding: 14px; cursor: pointer; transition: all 0.12s; }
+.chamber-card.selected { border-color: var(--primary); background: oklch(0.546 0.121 158 / 5%); }
+.chamber-card:hover { border-color: oklch(0.546 0.121 158 / 60%); }
+.chamber-name { font-size: 14px; font-weight: 600; color: var(--foreground); margin-bottom: 4px; }
+.chamber-detail { font-size: 12px; color: var(--muted-foreground); display: flex; gap: 10px; }
+.selected-indicator { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 2px solid white; box-shadow: 0 0 0 1.5px var(--primary); float: right; margin-top: 2px; }
+
+/* Schedule grid */
+.schedule-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); margin-bottom: 10px; }
+.week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.week-title { font-size: 13px; font-weight: 600; }
+.week-btn { width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--border); background: white; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.day-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 14px; }
+.day-btn { display: flex; flex-direction: column; align-items: center; padding: 6px 2px; border-radius: 8px; border: 1.5px solid transparent; cursor: pointer; background: none; font-family: inherit; transition: all 0.12s; }
+.day-btn:hover { background: var(--muted); }
+.day-btn.has-slots { border-color: var(--border); background: white; }
+.day-btn.selected { border-color: var(--primary); background: oklch(0.546 0.121 158 / 8%); }
+.day-btn.past { opacity: 0.35; cursor: not-allowed; }
+.day-name { font-size: 10px; color: var(--muted-foreground); font-weight: 600; }
+.day-num { font-size: 14px; font-weight: 700; color: var(--foreground); margin: 2px 0; }
+.day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
+.day-btn.selected .day-name, .day-btn.selected .day-num { color: var(--primary); }
+
+.slots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.slot { padding: 6px 4px; border: 1.5px solid var(--border); border-radius: 8px; text-align: center; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.12s; background: white; color: var(--foreground); font-family: inherit; }
+.slot:hover { border-color: var(--primary); color: var(--primary); }
+.slot.selected { border-color: var(--primary); background: var(--primary); color: white; }
+.slot.full { background: var(--muted); color: var(--muted-foreground); cursor: not-allowed; border-color: transparent; text-decoration: line-through; }
+
+/* Confirm details form */
+.form-section { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--muted-foreground); margin-bottom: 5px; display: block; }
+.form-input { width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 0 12px; font-size: 14px; color: var(--foreground); font-family: inherit; background: white; }
+.form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px oklch(0.546 0.121 158 / 15%); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.patient-card { border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--muted); display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.patient-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.patient-name { font-size: 14px; font-weight: 600; }
+.patient-sub { font-size: 12px; color: var(--muted-foreground); }
+
+/* Summary box */
+.summary-box { background: var(--muted); border-radius: calc(var(--radius) * 1.2); padding: 14px; margin-bottom: 16px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 13px; }
+.summary-row + .summary-row { border-top: 1px solid var(--border); }
+.summary-label { color: var(--muted-foreground); }
+.summary-value { font-weight: 600; color: var(--foreground); }
+.summary-value.fee { color: var(--primary); font-size: 15px; }
+
+/* Dialog footer */
+.dialog-footer { padding: 14px 24px 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius); font-weight: 500; cursor: pointer; font-size: 14px; font-family: inherit; }
+.btn-primary { height: 44px; padding: 0 24px; background: var(--primary); color: white; border: none; flex: 1; font-size: 15px; font-weight: 600; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-ghost { height: 44px; padding: 0 16px; background: transparent; color: var(--muted-foreground); border: none; }
+
+/* Confirmation dialog */
+.confirm-dialog { width: 440px; background: white; border-radius: calc(var(--radius) * 1.8); box-shadow: 0 24px 80px oklch(0 0 0 / 25%); overflow: hidden; }
+.confirm-header { background: linear-gradient(135deg, oklch(0.15 0.05 158), oklch(0.22 0.06 158)); padding: 28px 24px 24px; text-align: center; }
+.confirm-icon { width: 64px; height: 64px; border-radius: 50%; background: oklch(0.593 0.148 143.9 / 20%); border: 2px solid oklch(0.593 0.148 143.9 / 40%); display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 12px; }
+.confirm-title { font-size: 20px; font-weight: 800; color: white; margin-bottom: 4px; }
+.confirm-sub { font-size: 13px; color: oklch(0.8 0.01 158); }
+.confirm-body { padding: 20px 24px; }
+.serial-badge { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--primary-light); border: 1.5px solid oklch(0.546 0.121 158 / 30%); border-radius: calc(var(--radius) * 1.2); padding: 12px 16px; margin-bottom: 16px; }
+.serial-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-foreground); }
+.serial-num { font-size: 28px; font-weight: 900; color: var(--primary); font-variant-numeric: tabular-nums; }
+.tracker-link { font-size: 12px; color: var(--primary); }
+.confirm-details { border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+.confirm-detail-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.confirm-detail-row:last-child { border-bottom: none; }
+.confirm-detail-icon { font-size: 15px; width: 20px; text-align: center; }
+.confirm-detail-label { color: var(--muted-foreground); flex: 1; }
+.confirm-detail-value { font-weight: 600; color: var(--foreground); }
+.confirm-actions { display: flex; gap: 8px; }
+.btn-success { height: 42px; flex: 1; background: var(--success); color: white; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-outline { height: 42px; padding: 0 14px; background: transparent; color: var(--primary); border: 1.5px solid var(--primary); border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+
+.screen-label { font-size: 11px; font-weight: 700; color: #888; text-align: center; padding: 6px 12px; background: #e8e8e8; border-radius: 6px; margin-bottom: 8px; }
+.caption { font-size: 11px; color: #888; text-align: center; padding: 8px; }
+</style>
+</head>
+<body>
+
+<div style="font-size:12px;color:#666;text-align:center;max-width:900px">
+  <strong>Key Screen 3 of 4 — Booking Flow (Step 2: Date + Time · Step 3: Confirm Details · Step 5: Confirmation)</strong><br>
+  Illustrates: Booking flow dialog steps, stepper, chamber selection, schedule grid, slot picker, confirmation state.<br>
+  Spine: EXPERIENCE.md § Booking Flow, Key Flow 1 (steps 6–10) · DESIGN.md § Components § Dialog, Button, Input
+</div>
+
+<!-- Step 2: Date + Time -->
+<div>
+  <div class="screen-label">Step 2 of 4 — Select Date & Time Slot</div>
+  <div class="dialog">
+    <div class="dialog-header">
+      <div class="dialog-title">Book Appointment — Dr. Md. Karim Hossain</div>
+      <div class="dialog-subtitle">Pediatrician · Narsingdi Sadar Hospital</div>
+      <button class="close-btn">✕</button>
+    </div>
+    <div class="stepper">
+      <div class="step"><div class="step-circle done">✓</div><span class="step-label done">Chamber</span></div>
+      <div class="step-line done"></div>
+      <div class="step"><div class="step-circle active">2</div><span class="step-label active">Schedule</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-circle todo">3</div><span class="step-label">Confirm</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-circle todo">4</div><span class="step-label">Payment</span></div>
+    </div>
+    <div class="dialog-body">
+      <div class="schedule-label">Select Date</div>
+      <div class="week-nav">
+        <button class="week-btn">‹</button>
+        <span class="week-title">June 25 – July 1, 2026</span>
+        <button class="week-btn">›</button>
+      </div>
+      <div class="day-row">
+        <button class="day-btn past"><span class="day-name">Wed</span><span class="day-num">25</span></button>
+        <button class="day-btn has-slots selected"><span class="day-name">Thu</span><span class="day-num">26</span><div class="day-dot"></div></button>
+        <button class="day-btn has-slots"><span class="day-name">Fri</span><span class="day-num">27</span><div class="day-dot"></div></button>
+        <button class="day-btn"><span class="day-name">Sat</span><span class="day-num">28</span></button>
+        <button class="day-btn has-slots"><span class="day-name">Sun</span><span class="day-num">29</span><div class="day-dot"></div></button>
+        <button class="day-btn has-slots"><span class="day-name">Mon</span><span class="day-num">30</span><div class="day-dot"></div></button>
+        <button class="day-btn has-slots"><span class="day-name">Tue</span><span class="day-num">1</span><div class="day-dot"></div></button>
+      </div>
+      <div class="schedule-label">Available Slots — Thursday, June 26</div>
+      <div class="slots-grid">
+        <button class="slot full">9:00 AM</button>
+        <button class="slot full">9:30 AM</button>
+        <button class="slot selected">10:30 AM</button>
+        <button class="slot">11:00 AM</button>
+        <button class="slot">11:30 AM</button>
+        <button class="slot full">12:00 PM</button>
+        <button class="slot">2:00 PM</button>
+        <button class="slot">2:30 PM</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted-foreground);margin-top:10px;display:flex;gap:12px;">
+        <span>■ Full &nbsp; ■ Selected &nbsp; □ Available</span>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost">← Back</button>
+      <button class="btn btn-primary">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Confirm -->
+<div>
+  <div class="screen-label">Step 3 of 4 — Confirm Details</div>
+  <div class="dialog">
+    <div class="dialog-header">
+      <div class="dialog-title">Confirm Appointment Details</div>
+      <div class="dialog-subtitle">Review your information before proceeding</div>
+      <button class="close-btn">✕</button>
+    </div>
+    <div class="stepper">
+      <div class="step"><div class="step-circle done">✓</div><span class="step-label done">Chamber</span></div>
+      <div class="step-line done"></div>
+      <div class="step"><div class="step-circle done">✓</div><span class="step-label done">Schedule</span></div>
+      <div class="step-line done"></div>
+      <div class="step"><div class="step-circle active">3</div><span class="step-label active">Confirm</span></div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-circle todo">4</div><span class="step-label">Payment</span></div>
+    </div>
+    <div class="dialog-body">
+      <div class="patient-card">
+        <div class="patient-avatar">👤</div>
+        <div>
+          <div class="patient-name">Rahima Begum</div>
+          <div class="patient-sub">+880 1712-345678 · DOB: 15 Mar 1992</div>
+        </div>
+        <button style="margin-left:auto;font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;">Edit</button>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Reason for Visit (optional)</label>
+        <input type="text" class="form-input" placeholder="e.g. Fever, cold, routine checkup…" value="Fever and cough — 3-year-old child" />
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-row"><span class="summary-label">Doctor</span><span class="summary-value">Dr. Md. Karim Hossain</span></div>
+        <div class="summary-row"><span class="summary-label">Chamber</span><span class="summary-value">Narsingdi Sadar Hospital</span></div>
+        <div class="summary-row"><span class="summary-label">Date & Time</span><span class="summary-value">Thu, Jun 26 · 10:30 AM</span></div>
+        <div class="summary-row"><span class="summary-label">Consultation Fee</span><span class="summary-value fee">৳600</span></div>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost">← Back</button>
+      <button class="btn btn-primary">Confirm & Pay ৳600</button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 5: Confirmation -->
+<div>
+  <div class="screen-label">Step 5 — Booking Confirmed ✓</div>
+  <div class="confirm-dialog">
+    <div class="confirm-header">
+      <div class="confirm-icon">✓</div>
+      <div class="confirm-title">Appointment Confirmed!</div>
+      <div class="confirm-sub">Your slot is secured. See you on Thursday.</div>
+    </div>
+    <div class="confirm-body">
+      <div class="serial-badge">
+        <div>
+          <div class="serial-label">Your Serial Number</div>
+          <div class="serial-num">#12</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div style="font-size:11px;color:var(--muted-foreground);margin-bottom:2px;">Est. wait when you arrive</div>
+          <div style="font-size:20px;font-weight:800;color:var(--primary);">~45 min</div>
+        </div>
+      </div>
+      <div class="confirm-details">
+        <div class="confirm-detail-row"><span class="confirm-detail-icon">👨‍⚕️</span><span class="confirm-detail-label">Doctor</span><span class="confirm-detail-value">Dr. Karim Hossain</span></div>
+        <div class="confirm-detail-row"><span class="confirm-detail-icon">📅</span><span class="confirm-detail-label">Date & Time</span><span class="confirm-detail-value">Thu, Jun 26 · 10:30 AM</span></div>
+        <div class="confirm-detail-row"><span class="confirm-detail-icon">📍</span><span class="confirm-detail-label">Chamber</span><span class="confirm-detail-value">Narsingdi Sadar Hospital</span></div>
+        <div class="confirm-detail-row"><span class="confirm-detail-icon">💳</span><span class="confirm-detail-label">Payment</span><span class="confirm-detail-value" style="color:var(--success);">৳600 Paid</span></div>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn-success">📍 Track Queue Live</button>
+        <button class="btn-outline">📅 Add to Calendar</button>
+        <button class="btn-outline">📤 Share</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">My Doctor — Key Screen 3/4: Booking Flow · Dialog steps 2, 3, 5 · Brand green primary · Confirmation with serial number</p>
+</body>
+</html>

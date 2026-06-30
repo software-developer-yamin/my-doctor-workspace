@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+.turbo/
+coverage/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Docker
+.docker/
+
+# Local MCP config (machine-specific paths)
+.mcp.json
+
+# Local tool settings (machine-specific permissions/paths)
+.claude/settings.local.json
+.opencode/settings.local.json

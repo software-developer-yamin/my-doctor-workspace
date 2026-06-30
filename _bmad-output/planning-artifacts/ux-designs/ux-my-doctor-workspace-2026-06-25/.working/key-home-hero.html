@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Doctor — Home Hero (Key Screen)</title>
+<style>
+/*
+  Spine sections governing this screen:
+  - DESIGN.md § Brand & Style, Colors, Typography, Layout & Spacing, Components § Buttons
+  - EXPERIENCE.md § Information Architecture (Home), Component Patterns § Search Bar
+  - EXPERIENCE.md § Key Flows § Flow 1 (steps 1–2), Responsive & Platform
+*/
+
+/* ── Design tokens ── */
+:root {
+  --primary: oklch(0.546 0.121 158);
+  --primary-dark: oklch(0.35 0.09 158);
+  --primary-light: oklch(0.95 0.02 158);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.518 0.108 191);
+  --secondary-foreground: oklch(0.985 0 0);
+  --tertiary: oklch(0.865 0.201 158);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.008 158);
+  --muted: oklch(0.965 0.005 158);
+  --muted-foreground: oklch(0.5 0.012 158);
+  --border: oklch(0.91 0.007 158);
+  --surface: oklch(0.988 0 0);
+  --card: oklch(1 0 0);
+
+  --radius: 0.625rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-full: 9999px;
+
+  font-family: 'Inter', 'Geist Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f4f4f5; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; gap: 40px; }
+
+/* ── Browser frame ── */
+.frame { width: 100%; max-width: 1280px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px oklch(0 0 0 / 15%); background: var(--background); }
+.browser-bar { background: #e8e8e8; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #d0d0d0; }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot.red { background: #ff5f56; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #27c93f; }
+.url-bar { flex: 1; background: white; border-radius: 6px; padding: 4px 12px; font-size: 12px; color: #666; }
+
+/* ── Header ── */
+header { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; border-bottom: 1px solid var(--border); background: var(--background); }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; color: var(--primary); }
+.logo-mark { width: 32px; height: 32px; background: var(--primary); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 800; }
+nav { display: flex; gap: 24px; }
+nav a { font-size: 14px; color: var(--foreground); text-decoration: none; font-weight: 500; }
+nav a:hover { color: var(--primary); }
+nav a.active { color: var(--primary); }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-lg); font-weight: 500; cursor: pointer; border: none; font-size: 14px; transition: all 0.15s; }
+.btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+.btn-md { height: 40px; padding: 0 16px; }
+.btn-lg { height: 48px; padding: 0 24px; font-size: 15px; }
+.btn-primary { background: var(--primary); color: var(--primary-foreground); }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+.btn-ghost { background: transparent; color: var(--foreground); }
+
+/* ── Hero ── */
+.hero { position: relative; padding: 72px 32px 80px; background: linear-gradient(135deg, oklch(0.15 0.05 158) 0%, oklch(0.22 0.06 170) 60%, oklch(0.18 0.05 185) 100%); overflow: hidden; }
+.hero-bg-circle { position: absolute; border-radius: 50%; opacity: 0.08; background: var(--tertiary); }
+.hero-bg-circle.c1 { width: 500px; height: 500px; top: -150px; right: -100px; }
+.hero-bg-circle.c2 { width: 300px; height: 300px; bottom: -100px; left: -80px; }
+.hero-content { position: relative; z-index: 1; max-width: 700px; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; background: oklch(0.546 0.121 158 / 20%); border: 1px solid oklch(0.546 0.121 158 / 40%); color: var(--tertiary); border-radius: var(--radius-full); padding: 4px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; margin-bottom: 20px; }
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tertiary); }
+h1 { font-size: clamp(28px, 4vw, 48px); font-weight: 800; color: white; line-height: 1.15; margin-bottom: 16px; }
+h1 span { color: var(--tertiary); }
+.hero-sub { font-size: 17px; color: oklch(0.85 0.01 158); line-height: 1.6; margin-bottom: 36px; max-width: 540px; }
+
+/* ── Search bar ── */
+.search-card { background: white; border-radius: var(--radius-2xl); padding: 20px; box-shadow: 0 20px 60px oklch(0 0 0 / 30%); max-width: 720px; }
+.search-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--muted); border-radius: var(--radius-lg); padding: 4px; width: fit-content; }
+.search-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; border-radius: var(--radius-md); cursor: pointer; color: var(--muted-foreground); border: none; background: transparent; }
+.search-tab.active { background: white; color: var(--primary); box-shadow: 0 1px 3px oklch(0 0 0 / 12%); }
+.search-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.search-field { display: flex; flex-direction: column; gap: 5px; }
+.search-field label { font-size: 11px; font-weight: 600; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.06em; }
+.search-input-wrap { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 0 12px; height: 44px; background: var(--surface); }
+.search-input-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px oklch(0.546 0.121 158 / 15%); }
+.search-icon { font-size: 16px; color: var(--muted-foreground); flex-shrink: 0; }
+.search-input-wrap input { border: none; outline: none; background: transparent; font-size: 14px; color: var(--foreground); width: 100%; font-family: inherit; }
+.search-input-wrap input::placeholder { color: var(--muted-foreground); }
+.search-btn { height: 44px; padding: 0 24px; background: var(--primary); color: white; border-radius: var(--radius-lg); border: none; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+
+/* ── Quick links ── */
+.quick-links { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.quick-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: oklch(0.546 0.121 158 / 10%); border: 1px solid oklch(0.546 0.121 158 / 25%); color: oklch(0.546 0.121 158); border-radius: var(--radius-full); font-size: 12px; font-weight: 500; cursor: pointer; }
+
+/* ── Stats bar ── */
+.stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
+.stat-item { padding: 20px 24px; display: flex; align-items: center; gap: 12px; border-right: 1px solid var(--border); }
+.stat-item:last-child { border-right: none; }
+.stat-icon { width: 44px; height: 44px; border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.stat-icon.green { background: oklch(0.546 0.121 158 / 12%); }
+.stat-icon.teal { background: oklch(0.518 0.108 191 / 12%); }
+.stat-icon.lime { background: oklch(0.865 0.201 158 / 20%); }
+.stat-icon.blue { background: oklch(0.578 0.164 251.2 / 12%); }
+.stat-num { font-size: 22px; font-weight: 800; color: var(--primary); line-height: 1; }
+.stat-label { font-size: 12px; color: var(--muted-foreground); margin-top: 2px; }
+
+/* ── Specializations ── */
+.section { padding: 48px 32px; }
+.section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; }
+.section-label { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.section-title { font-size: 26px; font-weight: 800; color: var(--foreground); }
+.see-all { font-size: 14px; color: var(--primary); font-weight: 500; text-decoration: none; }
+.spec-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; }
+.spec-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 8px; border-radius: var(--radius-xl); border: 1.5px solid var(--border); background: white; cursor: pointer; transition: all 0.15s; }
+.spec-card:hover { border-color: var(--primary); background: var(--primary-light); }
+.spec-card.active { border-color: var(--primary); background: var(--primary-light); }
+.spec-icon { width: 48px; height: 48px; border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; font-size: 22px; background: oklch(0.546 0.121 158 / 10%); }
+.spec-name { font-size: 11px; font-weight: 600; color: var(--foreground); text-align: center; line-height: 1.3; }
+
+/* ── Caption ── */
+.caption { font-size: 11px; color: #888; text-align: center; padding: 8px; }
+</style>
+</head>
+<body>
+
+<div style="font-size:12px;color:#666;text-align:center;max-width:800px">
+  <strong>Key Screen 1 of 4 — Home Hero</strong><br>
+  Illustrates: Search Bar component, Hero section, Stats Bar, Specializations grid entry point.<br>
+  Spine: EXPERIENCE.md § Search Bar, Key Flow 1 (steps 1–2) · DESIGN.md § Colors, Components
+</div>
+
+<div class="frame">
+  <div class="browser-bar">
+    <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+    <div class="url-bar">mydoctor.com.bd</div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">M</div>
+      My Doctor
+    </div>
+    <nav>
+      <a href="#" class="active">Home</a>
+      <a href="#">Doctors</a>
+      <a href="#">Hospitals</a>
+      <a href="#">Diagnostics</a>
+      <a href="#">Telemedicine</a>
+      <a href="#">More ▾</a>
+    </nav>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm">Sign In</button>
+      <button class="btn btn-primary btn-sm">Sign Up</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-bg-circle c1"></div>
+    <div class="hero-bg-circle c2"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><span class="hero-badge-dot"></span> Trusted by 50,000+ patients in Bangladesh</div>
+      <h1>Your Health, <span>Our Priority</span><br>24/7 Care at Your Fingertips</h1>
+      <p class="hero-sub">Connect with top doctors, book diagnostics, request ambulances, and access telemedicine — all in one trusted platform.</p>
+
+      <div class="search-card">
+        <div class="search-tabs">
+          <button class="search-tab active">Doctors</button>
+          <button class="search-tab">Hospitals</button>
+          <button class="search-tab">Diagnostics</button>
+          <button class="search-tab">Telemedicine</button>
+        </div>
+        <div class="search-row">
+          <div class="search-field">
+            <label>Doctor / Specialty</label>
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="e.g. Cardiologist, Dr. Karim…" />
+            </div>
+          </div>
+          <div class="search-field">
+            <label>Location</label>
+            <div class="search-input-wrap">
+              <span class="search-icon">📍</span>
+              <input type="text" placeholder="District or area…" />
+            </div>
+          </div>
+          <button class="search-btn">🔍 Find Now</button>
+        </div>
+        <div class="quick-links">
+          <span style="font-size:11px;color:var(--muted-foreground);align-self:center;">Popular:</span>
+          <span class="quick-chip">🫀 Cardiologist</span>
+          <span class="quick-chip">🧒 Pediatrician</span>
+          <span class="quick-chip">🦷 Dentist</span>
+          <span class="quick-chip">🧠 Neurologist</span>
+          <span class="quick-chip">👁️ Eye Specialist</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-icon green">👨‍⚕️</div>
+      <div><div class="stat-num">1,200+</div><div class="stat-label">Verified Doctors</div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon teal">🏥</div>
+      <div><div class="stat-num">180+</div><div class="stat-label">Hospitals & Clinics</div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon lime">🩺</div>
+      <div><div class="stat-num">50,000+</div><div class="stat-label">Patients Served</div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-icon blue">⭐</div>
+      <div><div class="stat-num">4.8/5</div><div class="stat-label">Average Rating</div></div>
+    </div>
+  </div>
+
+  <!-- Specializations -->
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-label">Browse by Specialty</div>
+        <div class="section-title">Find the Right Specialist</div>
+      </div>
+      <a href="#" class="see-all">See all specialties →</a>
+    </div>
+    <div class="spec-grid">
+      <div class="spec-card active"><div class="spec-icon">🫀</div><div class="spec-name">Cardiology</div></div>
+      <div class="spec-card"><div class="spec-icon">🧠</div><div class="spec-name">Neurology</div></div>
+      <div class="spec-card"><div class="spec-icon">🧒</div><div class="spec-name">Pediatrics</div></div>
+      <div class="spec-card"><div class="spec-icon">🦷</div><div class="spec-name">Dentistry</div></div>
+      <div class="spec-card"><div class="spec-icon">👁️</div><div class="spec-name">Ophthalmology</div></div>
+      <div class="spec-card"><div class="spec-icon">🩻</div><div class="spec-name">Orthopedics</div></div>
+      <div class="spec-card"><div class="spec-icon">🫁</div><div class="spec-name">Pulmonology</div></div>
+      <div class="spec-card"><div class="spec-icon">➕</div><div class="spec-name">More…</div></div>
+    </div>
+  </div>
+</div>
+
+<p class="caption">My Doctor — Key Screen 1/4: Home Hero · Brand green oklch(0.546 0.121 158) · Geist Sans · Radius 10px base</p>
+</body>
+</html>
